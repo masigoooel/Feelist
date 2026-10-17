@@ -30,7 +30,7 @@ let client: GoogleGenAI | null = null;
 function getClient() {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) {
-    throw new PlaylistAIError("Server belum diatur: GEMINI_API_KEY belum diisi di .env.local.", 500);
+    throw new PlaylistAIError("Server belum diatur: GEMINI_API_KEY belum diisi (lokal: file .env.local · Vercel: Settings → Environment Variables, lalu Redeploy).", 500);
   }
   if (isPlaceholderKey(key)) {
     throw new PlaylistAIError(
