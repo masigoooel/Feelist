@@ -1,26 +1,245 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Warna latar & aksen mood diisi dari lib/moods.ts lewat variabel --mood-bg dan
+   --mood-accent di <html> (nilai awal di app/layout.tsx, lalu diganti halaman). */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-mood: var(--mood-bg);
+  --color-accent: var(--mood-accent);
+  --color-ink: #1e1240; /* teks di atas putih / di atas aksen */
+  --color-soft: var(--mood-soft); /* teks sekunder di atas latar mood (lib/moods.ts) */
+  --color-placeholder: #d9d0ff;
+  --color-sub: #4e4673; /* teks sekunder di atas putih */
+  --color-sub-2: #5a5280;
+  --color-num: #6b6390;
+  --color-playing: #f3efff;
+  --color-playing-text: #4a2fd0;
+  --color-row-hover: #f8f6ff;
+  --font-sans: var(--font-jakarta), "Helvetica Neue", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Satu sumber warna latar: <body> (diisi MoodColorProvider). Halaman di atasnya transparan,
+   jadi pindah beranda → memuat → hasil selalu transisi halus tanpa kilatan warna. */
+body {
+  background-color: var(--page-bg, var(--mood-bg));
+  color: #ffffff;
+  font-family: var(--font-sans);
+  transition: background-color var(--mood-speed, 0.7s) ease;
+}
+
+/* Elemen lain yang berlatar warna mood (mis. bar tombol HP di beranda) ikut berganti pelan-pelan */
+.mood-fade {
+  transition: background-color 0.7s ease;
+}
+
+:focus-visible {
+  outline: 3px solid var(--mood-accent);
+  outline-offset: 3px;
+}
+
+/* Aplikasi terinstal (layar utama HP): tidak bisa di-zoom pakai jari (pinch / ketuk dua kali), hanya geser.
+   Di browser biasa zoom tetap bisa (aksesibilitas). Lihat juga components/NoZoomWhenInstalled.tsx */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  html,
+  body {
+    touch-action: pan-x pan-y;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Judul halaman menerima fokus saat ganti layar (pembaca layar & keyboard), tanpa garis fokus */
+h1[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* ---------- Geser mood (halaman hasil) ---------- */
+/* Elemen berlatar mood yang menimpa konten (bar tombol HP): ikut kecepatan transisi body */
+.lift-fade {
+  transition: background-color var(--mood-speed, 0.35s) ease;
+}
+
+.lift-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.lift-range:focus-visible {
+  outline: none;
+}
+.lift-range::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 0.3);
+}
+.lift-range::-moz-range-track {
+  height: 10px;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 0.3);
+}
+.lift-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 36px;
+  height: 36px;
+  margin-top: -13px; /* tengah track 10px */
+  border: 0;
+  border-radius: 50%;
+  background: #ffffff;
+}
+.lift-range::-moz-range-thumb {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: #ffffff;
+}
+.lift-range:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid #ffffff;
+  outline-offset: 4px;
+}
+.lift-range:focus-visible::-moz-range-thumb {
+  outline: 3px solid #ffffff;
+  outline-offset: 4px;
+}
+
+/* Titik penanda 5 tingkat di bawah slider Geser mood (pusat thumb 36px bergerak dari 18px sampai lebar-18px) */
+.lift-dots {
+  position: relative;
+  height: 6px;
+  margin-top: -6px;
+}
+.lift-dots > span {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  transition: background-color 0.2s ease;
+}
+
+/* ---------- Gelombang suara per lagu (MoodWave): path 2x lebar digeser 72 unit, berulang mulus ---------- */
+@keyframes gelombang {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-72px);
+  }
+}
+.mood-wave {
+  animation: gelombang 2s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mood-wave {
+    animation: none;
+  }
+}
+
+/* ---------- Daftar pilihan bahasa / era di beranda (turun 0.25s) ---------- */
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+.filter-dropdown {
+  animation: dropdown-in 0.25s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .filter-dropdown {
+    animation: none;
+  }
+}
+
+/* ---------- Playlist terakhir: kartu naik 4px saat hover, toast hapus muncul dari bawah ---------- */
+.history-card {
+  transition: transform 0.2s ease;
+}
+.history-card:hover {
+  transform: translateY(-4px);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+.toast-in {
+  animation: toast-in 0.25s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .history-card {
+    transition: none;
+  }
+  .history-card:hover {
+    transform: none;
+  }
+  .toast-in {
+    animation: none;
+  }
+}
+
+/* ---------- Mini player (slide dari bawah 250ms) ---------- */
+@keyframes mini-in {
+  from {
+    transform: translateY(calc(100% + 24px));
+  }
+}
+.mini-player {
+  animation: mini-in 0.25s ease;
+}
+
+/* Isi kartu Story tidak boleh dimampatkan flexbox (teks jadi terpotong) */
+.story-content > * {
+  flex-shrink: 0;
+}
+
+/* ---------- Layar memuat ---------- */
+@keyframes loading-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.loading-fade {
+  animation: loading-fade 0.5s ease both;
+}
+
+@keyframes loading-pill {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.loading-pill {
+  animation: loading-pill 1.1s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.loading-bar {
+  transition: width 0.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  .mood-fade,
+  .lift-fade,
+  .loading-bar {
+    transition: none;
+  }
+  .loading-fade,
+  .loading-pill,
+  .mini-player {
+    animation: none;
+  }
 }
